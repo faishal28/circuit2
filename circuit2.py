@@ -147,6 +147,45 @@ class Node(object):
         self.height = None 
         self.gamma = None
 
+    def find_min(self):
+      """Finds the node with the minimum key in the subtree rooted at this 
+        node.
+        
+        Returns:
+            The node with the minimum key.
+      """
+      current = self
+      while current.left is not None:
+        current = current.left
+      return current
+
+    def next_larger(self):
+      """Returns the node with the next larger key (the successor) in the BST.
+      """
+      if self.right is not None:
+        return self.right.find_min()
+      current = self
+      while current.parent is not None and current is current.parent.right:
+        current = current.parent
+      return current.parent
+
+    def delete(self):
+      """Deletes and returns this node from the BST."""
+      if self.left is None or self.right is None:
+          if self is self.parent.left:
+            self.parent.left = self.left or self.right
+            if self.parent.left is not None:
+              self.parent.left.parent = self.parent
+          else:
+            self.parent.right = self.left or self.right
+            if self.parent.right is not None:
+              self.parent.right.parent = self.parent
+          return self
+      else:
+        s = self.next_larger()
+        self.key, s.key = s.key, self.key
+        return s.delete()
+
 class RangeIndex(object):
   """Array-based range index implementation."""
   
@@ -157,87 +196,100 @@ class RangeIndex(object):
   def add(self, key):
     """Inserts a key in the range index."""
     if key is None:
-        raise ValueError('Cannot insert nil in the index')
+      raise ValueError('Cannot insert nil in the index')
     if self.root is None:
-        self.root = Node(key)
-        self.root.height = height(self.root)
-        #update
+      self.root = Node(key)
+      update(root)
     else:
-        x = self.root
-        p = self.root.parent
-        pos = None 
-        while x is not None:
-            if key < x.key:
-                p = x
-                x = x.left
-                pos = 0
-            else:
-                p = x
-                x = x.right
-                pos = 1
-        if pos:
-            x = Node(key)
-            x.parent = p
-            p.right = x
-            #udate
+      x = self.root
+      p = self.root.parent
+      pos = None 
+      while x is not None:
+        if key < x.key:
+          p = x
+          x = x.left
+          pos = 0
         else:
-            x = Node(key)
-            x.parent = p
-            p.left = x
-            #update
+          p = x
+          x = x.right
+          pos = 1
+      if pos:
+        x = Node(key)
+        x.parent = p
+        p.right = x
+        update(x)
+      else:
+        x = Node(key)
+        x.parent = p
+        p.left = x
+        update(x)
 
   def update(self, node):
-      while node is not None:
-          if(abs(__height(node.left) - __height(node.right)) <= 1):
-              update_height(node)
-          elif(__height(node.left) < __height(node.right)):
-              if(__height(node.right) > height(node.left)):
-                  left_rotate(node)
-              else:
-                right_rotate(node.right)
-                left_rotate(node)
+    while node is not None:
+      if(abs(__height(node.left) - __height(node.right)) <= 1):
+        update_height(node)
+        update_gamma(node)
+      elif(__height(node.left) < __height(node.right)):
+        if(__height(node.right) > height(node.left)):
+          left_rotate(node)
+        else:
+          right_rotate(node.right)
+          left_rotate(node)
+        else:
+          if(__height(node.left) > __height(node.right)):
+            right_rotate(node)
           else:
-              if(__height(node.left) > __height(node.right)):
-                  right_rotate(node)
-              else:
-                  left_rotate(node.left)
-                  right_rotate(node)
-          node = node.parent
+            left_rotate(node.left)
+            right_rotate(node)
+      node = node.parent
 
   def left_rotate(self, node):
-      y = node.right
-      node.right = y.left
-      if y.left is not None:
-          y.left.parent = node
-      y.left = node
-      if node.parent is None:
-          self.root = y
-      y.parent = node.parent
-      node.parent = y
-      update_height(node)
-      update_height(y)
+    y = node.right
+    node.right = y.left
+    if y.left is not None:
+      y.left.parent = node
+    y.left = node
+    if node.parent is None:
+      self.root = y
+    y.parent = node.parent
+    node.parent = y
+    update_height(node)
+    update_height(y)
+    update_gamma(node)
+    update_gamma(y)
 
   def right_rotate(self, node):
-      x = node.right
-      node.left = x.right
-      if x.right is not None:
-        x.right.parent = node 
-      x.right = node 
-      if node.parent is None:
-        self.root = x
-      x.parent = node.parent
-      node.parent = x
-      update_height(node)
-      update_height(x)
+    x = node.right
+    node.left = x.right
+    if x.right is not None:
+      x.right.parent = node 
+    x.right = node 
+    if node.parent is None:
+      self.root = x
+    x.parent = node.parent
+    node.parent = x
+    update_height(node)
+    update_height(x)
+    update_gamma(node)
+    update_gamma(x)
       
   def update_height(node):
       node.height = max(__height(node.left), __(node.right)) + 1
 
-  def __height(b = False, x):
+  def __height(x):
       if x is None:
           return -1
       else:
-          return x.height 
+          return x.height
+
+  def gamma(node):
+    if node is None:
+      return 0
+    else:
+      return node.gamma
+  
+  def update_gamma(node):
+    node.gamma = gamma(node.left) + gamma(node.right) + 1 
 
   def remove(self, key):
     """Removes a key from the range index."""
