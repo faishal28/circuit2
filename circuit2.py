@@ -291,9 +291,25 @@ class RangeIndex(object):
   def update_gamma(node):
     node.gamma = gamma(node.left) + gamma(node.right) + 1 
 
+  def find(self, key):
+      if self.root is None:
+          raise ValueError("Tree empty")
+      node = self.root
+      p = node
+      while node is not None:
+          if key == node.key:
+              return node
+          elif key < node.key:
+              node = node.left
+          else:
+              node = node.right
+
   def remove(self, key):
     """Removes a key from the range index."""
-    self.data.remove(key)
+    node = find(self, key)
+    if node is not None:
+        node = node.delete()
+        update(node.parent)
   
   def list(self, first_key, last_key):
     """List of values for the keys that fall within [first_key, last_key]."""
