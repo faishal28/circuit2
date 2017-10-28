@@ -1,5 +1,3 @@
-Circuit Layout Verification code for MIT 6.006 Fall 2011 PS3
-
 The code distribution contains the following files:
   * circuit2.py - implementation of the circuit verifier
   * circuit2.rb - Ruby implementation of the circuit verifier
